@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 72'><g fill='none' stroke='%232F3A2A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M15 35 Q15 24 25 24 Q29 15 39 18 Q47 12 55 20 Q65 20 65 30 Q66 33 65 35 Z' fill='%23FBF7EC'/><path d='M33 20 Q34 10 43 9 Q44 18 33 20 Z' fill='%238DB86A'/><path d='M9 35 Q40 32 71 35 Q70 63 40 65 Q10 63 9 35 Z' fill='%23EE9A4A'/><path d='M27 48 q3 -3.5 6 0 M47 48 q3 -3.5 6 0 M37 52 q3 3 6 0'/><ellipse cx='24' cy='53' rx='3.6' ry='2.2' fill='%23F2957A' stroke='none'/><ellipse cx='56' cy='53' rx='3.6' ry='2.2' fill='%23F2957A' stroke='none'/></g></svg>">
 <title>今天煮什么？</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +40,7 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
 .press:active{transform:scale(.95)}
 
 header.top{display:flex;align-items:center;gap:14px}
-header.top svg{flex:none;width:76px;height:64px}
+header.top svg{flex:none;width:84px;height:76px}
 header.top h1{font-size:clamp(30px,8vw,44px);line-height:1.1}
 header.top p{margin:2px 0 0;color:var(--muted);font-size:14px}
 
@@ -137,12 +138,20 @@ ol.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;
 <body>
 <div class="wrap">
   <header class="top">
-    <svg viewBox="0 0 76 64" aria-hidden="true" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 26 Q9 24 12 24 L60 24.5 Q63 25 62.5 28 Q60 50 36 52 Q12 50 8.5 29 Z" fill="var(--f-orange)"/>
-      <path d="M4 24 Q36 21 68 24" />
-      <path d="M62 30 Q70 30 69 36 Q68 41 60 41"/>
-      <path d="M30 52 L28 58 M44 52 L46 58 M24 58 Q36 60 50 58"/>
-      <path d="M26 16 Q23 12 26 8 M36 15 Q33 10 36 5 M46 16 Q43 12 46 8" stroke="var(--muted)"/>
+    <svg viewBox="0 0 80 72" aria-hidden="true" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 12 Q6 8 9 5 M15 10 Q13 6 16 3" stroke="var(--muted)"/>
+      <path d="M62 4 L48 30 M70 6 L54 31" stroke="var(--f-brown)" stroke-width="3"/>
+      <path d="M15 35 Q15 24 25 24 Q29 15 39 18 Q47 12 55 20 Q65 20 65 30 Q66 33 65 35 Z" fill="var(--f-white)"/>
+      <path d="M26 29 l2 1 M36 25 l2 -1 M46 27 l2 1 M55 29 l1 -2" stroke-width="1.6"/>
+      <path d="M33 20 Q34 10 43 9 Q44 18 33 20 Z" fill="var(--f-green)"/>
+      <path d="M35 18 Q38 14 41 12" stroke-width="1.4"/>
+      <path d="M9 35 Q40 32 71 35 Q70 63 40 65 Q10 63 9 35 Z" fill="var(--f-orange)"/>
+      <path d="M13 41 Q20 38 26 41 Q33 44 40 41 Q47 38 54 41 Q61 44 67 41" stroke="var(--f-yellow)" stroke-width="2.6"/>
+      <path d="M27 48 q3 -3.5 6 0 M47 48 q3 -3.5 6 0"/>
+      <path d="M37 52 q3 3 6 0"/>
+      <ellipse cx="24" cy="53" rx="3.6" ry="2.2" fill="var(--f-pink)" stroke="none"/>
+      <ellipse cx="56" cy="53" rx="3.6" ry="2.2" fill="var(--f-pink)" stroke="none"/>
+      <path d="M31 64 L30 69 L50 69 L49 64"/>
     </svg>
     <div>
       <h1>今天煮什么？</h1>
