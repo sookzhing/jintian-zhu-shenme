@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <meta name="apple-mobile-web-app-title" content="今天煮什么">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="今天煮什么">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 72'><g fill='none' stroke='%232F3A2A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M15 35 Q15 24 25 24 Q29 15 39 18 Q47 12 55 20 Q65 20 65 30 Q66 33 65 35 Z' fill='%23FBF7EC'/><path d='M33 20 Q34 10 43 9 Q44 18 33 20 Z' fill='%238DB86A'/><path d='M9 35 Q40 32 71 35 Q70 63 40 65 Q10 63 9 35 Z' fill='%23EE9A4A'/><path d='M27 48 q3 -3.5 6 0 M47 48 q3 -3.5 6 0 M37 52 q3 3 6 0'/><ellipse cx='24' cy='53' rx='3.6' ry='2.2' fill='%23F2957A' stroke='none'/><ellipse cx='56' cy='53' rx='3.6' ry='2.2' fill='%23F2957A' stroke='none'/></g></svg>">
 <title>今天煮什么？</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@400;600;800&display=swap">
 <style>
-/* Layout: one kitchen-notebook column — controls on top, recipe cards in a grid, a recipe opens as a bottom sheet, shopping list at the end */
+/* Layout: one kitchen-notebook column — header, two modes (菜单 / 冰箱有什么), shared controls, recipe cards; a recipe opens as a bottom sheet; shopping list at the end */
 :root{
   --bg:#F2F4EA; --paper:#FFFEF7; --ink:#2F3A2A; --muted:#6A735F; --line:#D8DDC9;
   --accent:#E0553A; --accent-ink:#FFFFFF; --leaf:#5F8D41; --leaf-soft:#E2EBD2; --chip:#FFFFFF;
@@ -34,6 +34,7 @@
   --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 24px -12px rgba(0,0,0,.7); --dot:rgba(156,194,122,.07); color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.3px);background-size:18px 18px;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
 .wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;display:flex;flex-direction:column;gap:22px}
 h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0;letter-spacing:.02em}
@@ -46,6 +47,13 @@ header.top{display:flex;align-items:center;gap:14px}
 header.top svg{flex:none;width:84px;height:76px}
 header.top h1{font-size:clamp(30px,8vw,44px);line-height:1.1}
 header.top p{margin:2px 0 0;color:var(--muted);font-size:14px}
+
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);background:var(--paper);border-radius:18px;padding:10px 14px;text-align:left;box-shadow:var(--shadow);min-height:64px}
+.mode svg{flex:none;width:44px;height:40px}
+.mode b{display:block;font-family:var(--display);font-weight:400;font-size:19px;line-height:1.2}
+.mode small{color:var(--muted);font-size:12.5px;line-height:1.3;display:block}
+.mode[aria-pressed="true"]{border-color:var(--leaf);background:var(--leaf-soft)}
 
 .controls{display:flex;flex-direction:column;gap:12px;background:var(--paper);border:1.5px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
@@ -69,7 +77,7 @@ header.top p{margin:2px 0 0;color:var(--muted);font-size:14px}
 .btn{border:0;border-radius:999px;padding:10px 18px;font-weight:800;min-height:44px}
 .btn.primary{background:var(--accent);color:var(--accent-ink)}
 .btn.ghost{background:var(--leaf-soft);color:var(--leaf)}
-.pick.flip{animation:flip .26s ease}
+.flip{animation:flip .26s ease}
 @keyframes flip{from{transform:perspective(600px) rotateX(14deg) translateY(6px);opacity:.4}to{transform:none;opacity:1}}
 
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -81,11 +89,24 @@ header.top p{margin:2px 0 0;color:var(--muted);font-size:14px}
 .card .illo svg{width:92%;height:auto}
 .card h3{font-size:17px;line-height:1.3;padding:0 2px}
 .card .meta{font-size:12.5px;color:var(--muted);padding:0 2px;font-variant-numeric:tabular-nums}
+.card .need{font-size:12.5px;padding:0 2px;color:var(--accent);font-weight:700}
+.card .need.ok{color:var(--leaf)}
 .tags{display:flex;flex-wrap:wrap;gap:4px;padding:0 2px}
 .tag{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--leaf-soft);color:var(--leaf)}
 .tag.pork{background:color-mix(in srgb,var(--f-pink) 25%,transparent);color:var(--accent)}
 .tag.sea{background:color-mix(in srgb,var(--f-yellow) 28%,transparent);color:var(--ink)}
 .empty{grid-column:1/-1;text-align:center;padding:28px 12px;color:var(--muted);background:var(--paper);border:1.5px dashed var(--line);border-radius:20px}
+
+/* fridge */
+.fridge{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+.fgroup{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
+.fgroup svg{width:40px;height:36px}
+.fgroup h3{font-size:15px;color:var(--muted);margin:0 0 6px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px}
+.fchips .chip{font-size:13.5px;padding:5px 11px;min-height:34px}
+.fchips .chip[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--chip));color:var(--ink)}
+.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;border-top:1px dashed var(--line);padding-top:12px}
+.fbar span{color:var(--muted);font-size:13.5px}
 
 /* sheet */
 .overlay{position:fixed;inset:0;background:rgba(20,25,15,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .22s ease}
@@ -107,6 +128,7 @@ td{padding:8px 6px;border-bottom:1px dashed var(--line);vertical-align:top}
 td.q{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
 td.b{color:var(--leaf);font-weight:700}
 td.b small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+td.have{color:var(--leaf);font-weight:800}
 .tbl{overflow-x:auto}
 ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:10px}
 ol.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px}
@@ -133,6 +155,9 @@ ol.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;
   .pick .illo{max-width:260px;width:100%;justify-self:center}
   .sheet-top{grid-template-columns:90px 1fr auto}
   .sheet-top h2{font-size:20px}
+  .mode{padding:8px 10px;gap:8px}
+  .mode svg{width:34px;height:32px}
+  .mode b{font-size:17px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -158,12 +183,23 @@ ol.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;
     </svg>
     <div>
       <h1>今天煮什么？</h1>
-      <p>家里煮的健康餐 · 15 个菜单 · 按人数算好要买多少</p>
+      <p>家里煮的健康餐 · 30 个菜单 · 按人数算好要买多少</p>
     </div>
   </header>
 
+  <div class="modes" role="group" aria-label="选择模式">
+    <button class="mode press" data-mode="menu">
+      <svg viewBox="0 0 44 40" aria-hidden="true" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5 Q22 3 34 5 L35 35 Q22 37 9 35 Z" fill="var(--f-white)"/><path d="M14 12 h14 M14 18 h14 M14 24 h9" stroke="var(--muted)"/><path d="M30 26 l8 -12 l3 2 l-8 12 l-4 1 Z" fill="var(--f-yellow)"/></svg>
+      <span><b>看菜单</b><small>30 道健康家常菜</small></span>
+    </button>
+    <button class="mode press" data-mode="fridge">
+      <svg viewBox="0 0 44 40" aria-hidden="true" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="24" height="34" rx="4" fill="var(--f-white)"/><path d="M9 15 h24 M13 8 v4 M13 19 v6"/><circle cx="34" cy="28" r="6" fill="var(--f-red)"/><path d="M34 22 q2 -3 4 -3" stroke="var(--f-green)"/></svg>
+      <span><b>冰箱有什么</b><small>用现有食材搭一道</small></span>
+    </button>
+  </div>
+
   <div class="controls">
-    <div class="row"><span class="label">餐</span>
+    <div class="row" id="mealRow"><span class="label">餐</span>
       <div class="seg" id="meals" role="group" aria-label="选择餐">
         <button data-m="all" class="press">全部</button>
         <button data-m="b" class="press">早餐</button>
@@ -185,10 +221,24 @@ ol.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;
     </div>
   </div>
 
-  <div class="pick" id="pick"></div>
+  <!-- 菜单模式 -->
+  <div id="menuView" style="display:flex;flex-direction:column;gap:22px">
+    <div class="pick" id="pick"></div>
+    <div class="sec-head"><h2 id="listTitle">菜单</h2><span>点卡片看食材、分量和做法</span></div>
+    <div class="grid" id="grid"></div>
+  </div>
 
-  <div class="sec-head"><h2 id="listTitle">菜单</h2><span>点卡片看食材、分量和做法</span></div>
-  <div class="grid" id="grid"></div>
+  <!-- 冰箱模式 -->
+  <div id="fridgeView" style="display:flex;flex-direction:column;gap:22px" hidden>
+    <div class="fridge">
+      <div class="sec-head"><h2>冰箱里有什么？</h2><span>点你手上有的食材，调味料不用选</span></div>
+      <div id="fgroups" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div class="fbar"><span id="fcount">还没选食材</span><button class="btn ghost press" id="fclear">全部取消</button></div>
+    </div>
+    <div class="pick" id="improv"></div>
+    <div class="sec-head"><h2 id="matchTitle">可以煮的菜</h2><span>按缺少的食材排，缺得越少越前面</span></div>
+    <div class="grid" id="matches"></div>
+  </div>
 
   <div class="shop" id="shop">
     <div class="sec-head"><h2>购物清单</h2><span id="shopHint"></span></div>
@@ -246,12 +296,34 @@ var ILLO={
     '<ellipse cx="54" cy="52" rx="44" ry="24" fill="var(--paper)"/><ellipse cx="54" cy="50" rx="36" ry="18" stroke="var(--line)"/>'+
     '<path d="M24 50 Q26 36 50 36 Q80 34 84 48 Q84 64 54 66 Q26 64 24 50 Z" fill="var('+a+')"/>'+
     '<path d="M36 46 q6 -4 12 0 M58 56 q6 -4 12 0" stroke="var('+b+')" stroke-width="3"/>'+
-    '<circle cx="64" cy="44" r="4" fill="var('+c+')"/><circle cx="42" cy="58" r="3.5" fill="var('+c+')"/></svg>';}
+    '<circle cx="64" cy="44" r="4" fill="var('+c+')"/><circle cx="42" cy="58" r="3.5" fill="var('+c+')"/></svg>';},
+  cup:function(a,b,c){return '<svg viewBox="0 0 120 90" '+S+' aria-hidden="true">'+
+    '<ellipse cx="60" cy="82" rx="30" ry="5" fill="var(--paper)"/>'+
+    '<path d="M40 22 L44 78 Q60 82 76 78 L80 22 Z" fill="var(--paper)"/>'+
+    '<path d="M41.5 42 L43.5 76 Q60 80 76.5 76 L78.5 42 Q60 46 41.5 42 Z" fill="var('+a+')"/>'+
+    '<path d="M42 56 Q60 60 78 56" stroke="var('+c+')" stroke-width="3"/>'+
+    '<circle cx="52" cy="36" r="5" fill="var('+b+')"/><circle cx="64" cy="33" r="4.5" fill="var('+b+')"/><circle cx="72" cy="38" r="4" fill="var('+c+')"/>'+
+    '<path d="M70 26 L84 6" stroke="var(--f-brown)" stroke-width="3"/>'+
+    '<path d="M20 70 q4 -10 10 -8 q-2 8 -10 8 Z M96 66 q6 -8 10 -4 q-4 6 -10 4 Z" fill="var(--f-green)"/></svg>';},
+  wrap:function(a,b,c){return '<svg viewBox="0 0 120 90" '+S+' aria-hidden="true">'+
+    '<ellipse cx="60" cy="62" rx="50" ry="20" fill="var(--paper)"/>'+
+    '<path d="M22 58 Q20 36 42 34 L90 30 Q102 32 100 46 Q98 62 84 64 L40 70 Q24 70 22 58 Z" fill="var(--f-cream)"/>'+
+    '<path d="M84 34 Q74 40 76 52 Q78 62 86 64" />'+
+    '<path d="M86 36 Q96 40 96 48" stroke="var('+c+')" stroke-width="4"/>'+
+    '<circle cx="90" cy="52" r="4" fill="var('+b+')"/><circle cx="92" cy="44" r="3" fill="var('+a+')"/>'+
+    '<path d="M34 50 q10 -4 20 0 M50 58 q10 -4 18 0" stroke="var(--f-brown)" stroke-width="1.6"/></svg>';}
 };
 function art(r){return ILLO[r.i[0]](r.i[1],r.i[2],r.i[3]);}
 
 // ---------- recipes: quantities are PER PERSON ----------
-// ingredient: [name, qty, unit, opts]  opts.p = pack size, opts.pu = pack unit, opts.n = buy note, opts.s = seasoning (pantry)
+// 想加新菜？复制一整段 {id:...} 改内容就好：
+//   id   不能重复（例如 'b11'）       m    'b' 早餐 / 'l' 午餐 / 'd' 晚餐
+//   t    分钟                         kcal 每人大约热量
+//   diet 'vegan' 纯素 / 'veg' 蛋奶素 / 'meat' 鸡或牛 / 'sea' 海鲜 / 'pork' 含猪肉
+//   i    插画：['bowl'|'noodle'|'plate'|'fish'|'pot'|'toast'|'pan'|'cup'|'wrap', 三个颜色]
+//   ing  食材 [名字, 每人分量, 单位, 选项]
+//        选项 p = 一包多少  pu = 包装单位  n = 购买备注  s:1 = 调味料（家里常备）
+//        名字里有「可省」的食材，不会算进「冰箱有什么」的缺少食材
 var R=[
 {id:'b1',m:'b',name:'燕麦香蕉坚果碗',t:10,kcal:380,diet:'veg',i:['bowl','--f-cream','--f-yellow','--f-brown'],
  note:'隔夜燕麦，前一晚 5 分钟准备',
@@ -278,6 +350,31 @@ var R=[
  ing:[['小米',40,'g',{p:500,pu:'包'}],['南瓜',100,'g',{p:800,pu:'块',n:'市场常切一块约 800g'}],['红枣',2,'粒',{p:30,pu:'包',n:'一包约 30 粒'}],['枸杞',5,'g',{p:100,pu:'包'}]],
  steps:['小米洗净，泡水 10 分钟。','南瓜去皮去籽，切小块。','锅里加水（每人约 500ml）煮滚，放入小米和南瓜，转小火煮 25 分钟，期间搅一搅防粘底。','加入红枣和枸杞再煮 5 分钟，把南瓜压散，粥就会变得浓稠金黄。'],
  tip:'前一晚把材料放进电饭锅，用"煮粥"模式预约，早上起来刚好。'},
+{id:'b6',m:'b',name:'希腊酸奶莓果杯',t:5,kcal:300,diet:'veg',i:['cup','--f-white','--f-red','--f-brown'],
+ note:'不用开火，五分钟就有一杯',
+ ing:[['无糖希腊酸奶',150,'g',{p:500,pu:'盒'}],['莓果（草莓或蓝莓）',80,'g',{p:250,pu:'盒'}],['即食燕麦片',20,'g',{p:500,pu:'包'}],['综合坚果（无盐）',10,'g',{p:200,pu:'包'}],['蜂蜜',1,'茶匙',{s:1}]],
+ steps:['杯底先铺一层燕麦。','加一半酸奶，再放一半莓果。','重复一次：燕麦、酸奶、莓果。','最后撒坚果，想甜一点淋少许蜂蜜。'],
+ tip:'前一晚装好放冰箱，燕麦吸了酸奶会变软，像在吃蛋糕。'},
+{id:'b7',m:'b',name:'青菜鸡蛋燕麦粥',t:15,kcal:280,diet:'veg',i:['bowl','--f-cream','--f-green','--f-yellow'],
+ note:'咸的燕麦粥，像吃粥一样暖',
+ ing:[['即食燕麦片',40,'g',{p:500,pu:'包'}],['鸡蛋',1,'粒',{p:10,pu:'盒',n:'10 粒装'}],['小白菜或菠菜',80,'g',{p:250,pu:'把',n:'一把约 250g'}],['姜',2,'片',{s:1}],['盐、白胡椒',0,'少许',{s:1}],['麻油',0.5,'茶匙',{s:1}]],
+ steps:['锅里加水（每人约 300ml）和姜丝煮滚。','放入燕麦，小火煮 3 分钟，边煮边搅。','加入切段的青菜煮 1 分钟。','打入鸡蛋，用筷子轻轻划散，煮到蛋花凝固。','下盐和白胡椒，淋几滴麻油。'],
+ tip:'燕麦比白粥快熟很多，赶时间的早上也来得及。'},
+{id:'b8',m:'b',name:'香蕉燕麦松饼',t:20,kcal:350,diet:'veg',i:['pan','--f-brown','--f-yellow','--f-red'],
+ note:'不加面粉不加糖，甜味来自香蕉',
+ ing:[['香蕉',1,'根'],['鸡蛋',1,'粒',{p:10,pu:'盒',n:'10 粒装'}],['即食燕麦片',40,'g',{p:500,pu:'包'}],['莓果（可省）',40,'g',{p:250,pu:'盒'}],['肉桂粉',0,'少许',{s:1}],['油',0.5,'茶匙',{s:1}]],
+ steps:['香蕉压成泥，加入鸡蛋打匀。','燕麦用搅拌机打成粉；不打也可以，口感会比较粗。','混合成面糊，加少许肉桂粉。','平底锅抹薄油开小火，每次舀一汤匙面糊，煎到表面冒小泡再翻面，每面约 2 分钟。','叠起来，放上莓果。'],
+ tip:'香蕉越熟越甜，皮上有黑点的最适合。'},
+{id:'b9',m:'b',name:'鸡蛋番茄全麦卷饼',t:15,kcal:400,diet:'veg',i:['wrap','--f-yellow','--f-red','--f-green'],
+ note:'包起来就能带走的早餐',
+ ing:[['全麦卷饼',1,'片',{p:6,pu:'包',n:'一包约 6 片'}],['鸡蛋',2,'粒',{p:10,pu:'盒',n:'10 粒装'}],['番茄',0.5,'粒'],['生菜',30,'g',{p:300,pu:'棵',n:'一棵约 300g'}],['芝士片（可省）',1,'片',{p:10,pu:'包',n:'一包约 10 片'}],['盐、黑胡椒',0,'少许',{s:1}],['油',0.5,'茶匙',{s:1}]],
+ steps:['番茄切丁，生菜洗净抹干。','鸡蛋打散加少许盐，平底锅小火炒成嫩嫩的炒蛋，加入番茄丁拌一下。','卷饼放进干锅，两面各热 30 秒。','铺上生菜、芝士和炒蛋，卷起来对半切。'],
+ tip:'可以前一晚做好用锡纸包起来，早上微波 30 秒带走。'},
+{id:'b10',m:'b',name:'菠菜香蕉奶昔配水煮蛋',t:5,kcal:320,diet:'veg',i:['cup','--f-green','--f-yellow','--f-white'],
+ note:'喝的早餐，青菜也一起吃下去',
+ ing:[['菠菜',40,'g',{p:250,pu:'把',n:'一把约 250g'}],['香蕉',1,'根'],['无糖豆浆',250,'ml',{p:1000,pu:'瓶',n:'1L 装'}],['鸡蛋',1,'粒',{p:10,pu:'盒',n:'10 粒装'}],['奇亚籽',5,'g',{p:250,pu:'包'}]],
+ steps:['鸡蛋放进滚水煮 8 分钟，捞起泡冷水。','同时把菠菜、香蕉、豆浆和奇亚籽放进搅拌机打 40 秒。','倒进杯子，配剥好的水煮蛋。'],
+ tip:'香蕉切块冷冻再打，奶昔会更冰更绵。'},
 
 {id:'l1',m:'l',name:'香煎鸡胸糙米饭碗',t:30,kcal:520,diet:'meat',i:['bowl','--f-brown','--f-green','--f-orange'],
  note:'高蛋白带饭首选',
@@ -304,6 +401,31 @@ var R=[
  ing:[['糙米（煮成约 1 碗饭）',60,'g',{p:1000,pu:'包',n:'1kg 装'}],['虾仁',100,'g',{p:250,pu:'包',n:'冷冻一包约 250g'}],['鸡蛋',1,'粒',{p:10,pu:'盒',n:'10 粒装'}],['冷冻杂菜（青豆、玉米、红萝卜）',80,'g',{p:500,pu:'包'}],['葱',0.5,'根'],['油',1,'茶匙',{s:1}],['生抽',1,'茶匙',{s:1}],['白胡椒',0,'少许',{s:1}]],
  steps:['糙米最好前一天煮好放冰箱，炒出来才会粒粒分明。','虾仁去肠线，用少许盐和白胡椒腌 5 分钟。','热锅少油把虾仁炒到变红，先盛起来。','打入鸡蛋炒散，加杂菜炒 2 分钟。','下饭大火翻炒，加生抽，放回虾仁和葱花炒匀即可。'],
  tip:'冷冻杂菜不用解冻，直接下锅就好。'},
+{id:'l6',m:'l',name:'韩式蔬菜拌饭',t:30,kcal:520,diet:'veg',i:['bowl','--f-orange','--f-green','--f-yellow'],
+ note:'五颜六色一大碗，蔬菜吃得够',
+ ing:[['糙米',60,'g',{p:1000,pu:'包',n:'1kg 装'}],['黄豆芽',60,'g',{p:250,pu:'包'}],['菠菜',60,'g',{p:250,pu:'把',n:'一把约 250g'}],['红萝卜',40,'g',{p:150,pu:'条',n:'一条约 150g'}],['香菇',3,'朵'],['鸡蛋',1,'粒',{p:10,pu:'盒',n:'10 粒装'}],['韩式辣椒酱',1,'汤匙',{s:1}],['麻油',1,'茶匙',{s:1}],['蒜',1,'瓣',{s:1}],['白芝麻',0.5,'茶匙',{s:1}]],
+ steps:['糙米饭先煮好。','豆芽、菠菜分别汆烫 1 分钟，挤干水，各拌少许麻油、蒜末和盐。','红萝卜切丝、香菇切片，少油各炒 1–2 分钟。','煎一个半熟的荷包蛋。','饭上把各种菜分区铺好，中间放蛋，加辣椒酱和芝麻，吃之前拌匀。'],
+ tip:'怕辣的话，辣椒酱换成酱油加一点点糖。'},
+{id:'l7',m:'l',name:'鹰嘴豆藜麦沙拉碗',t:20,kcal:480,diet:'vegan',i:['bowl','--f-yellow','--f-green','--f-red'],
+ note:'地中海风味，植物蛋白满满',
+ ing:[['藜麦',50,'g',{p:500,pu:'包'}],['鹰嘴豆（罐头）',80,'g',{p:240,pu:'罐',n:'一罐沥干约 240g'}],['黄瓜',0.5,'条'],['小番茄',5,'粒',{p:20,pu:'盒',n:'一盒约 20 粒'}],['紫洋葱',0.25,'粒'],['牛油果',0.5,'粒'],['橄榄油',1,'汤匙',{s:1}],['柠檬汁',1,'汤匙',{s:1}],['盐、黑胡椒',0,'少许',{s:1}]],
+ steps:['藜麦洗净，加 2 倍水煮滚后转小火煮 12 分钟，关火焖 5 分钟。','鹰嘴豆沥干，冲一下水。','黄瓜、番茄、洋葱和牛油果切丁。','橄榄油、柠檬汁、盐和黑胡椒拌成酱汁。','全部材料放进大碗拌匀。'],
+ tip:'酱汁分开装，吃之前才拌，带饭到中午也不会软。'},
+{id:'l8',m:'l',name:'姜黄烤鸡配黄瓜沙拉',t:35,kcal:500,diet:'meat',i:['plate','--f-yellow','--f-green','--f-cream'],
+ note:'南洋香料味，不油不腻',
+ ing:[['去骨鸡腿肉',150,'g'],['糙米',60,'g',{p:1000,pu:'包',n:'1kg 装'}],['黄瓜',0.5,'条'],['紫洋葱',0.25,'粒'],['酸柑或柠檬',0.5,'粒'],['姜黄粉',0.5,'茶匙',{s:1}],['蒜',2,'瓣',{s:1}],['香茅（可省）',0.5,'根',{s:1}],['盐',0,'少许',{s:1}],['油',1,'茶匙',{s:1}]],
+ steps:['鸡腿肉用姜黄粉、蒜末、拍碎的香茅、盐和油抓匀，腌 20 分钟。','烤箱 200°C 烤 18–20 分钟（气炸锅 190°C 约 15 分钟），中途翻面。','黄瓜和洋葱切薄片，挤入酸柑汁、加少许盐拌匀。','鸡肉切块，配糙米饭和黄瓜沙拉。'],
+ tip:'腌料可以一次多做，鸡肉分袋冷冻，要吃的前一晚拿出来解冻。'},
+{id:'l9',m:'l',name:'少油亲子丼',t:25,kcal:520,diet:'meat',i:['bowl','--f-yellow','--f-brown','--f-green'],
+ note:'鸡肉加滑蛋，日式家常饭',
+ ing:[['去骨鸡腿肉',120,'g'],['鸡蛋',1.5,'粒',{p:10,pu:'盒',n:'10 粒装'}],['洋葱',0.5,'粒'],['糙米',60,'g',{p:1000,pu:'包',n:'1kg 装'}],['葱',0.5,'根'],['生抽',1,'汤匙',{s:1}],['味醂或少许糖',1,'茶匙',{s:1}],['清水',4,'汤匙',{s:1}]],
+ steps:['鸡腿肉切小块，洋葱切丝。','小锅里放生抽、味醂和清水煮滚，下洋葱煮 2 分钟。','放入鸡肉，中火煮 5–6 分钟到熟。','蛋液分两次倒入：第一次煮到半凝固，第二次倒进后马上关火，盖上锅盖焖 30 秒。','连汁一起盖在糙米饭上，撒葱花。'],
+ tip:'蛋不要煮太久，滑滑的才好吃。'},
+{id:'l10',m:'l',name:'菠菜鹰嘴豆咖喱',t:30,kcal:470,diet:'vegan',i:['pot','--f-orange','--f-green','--f-yellow'],
+ note:'香浓不辣，纯素也很饱',
+ ing:[['鹰嘴豆（罐头）',100,'g',{p:240,pu:'罐',n:'一罐沥干约 240g'}],['菠菜',80,'g',{p:250,pu:'把',n:'一把约 250g'}],['番茄',1,'粒'],['洋葱',0.5,'粒'],['淡椰浆或豆浆',60,'ml',{p:200,pu:'包',n:'一小包约 200ml'}],['糙米',60,'g',{p:1000,pu:'包',n:'1kg 装'}],['咖喱粉',1,'茶匙',{s:1}],['姜',2,'片',{s:1}],['蒜',2,'瓣',{s:1}],['油',1,'茶匙',{s:1}],['盐',0,'少许',{s:1}]],
+ steps:['洋葱、蒜、姜切碎，少油炒到洋葱变软。','加咖喱粉炒 30 秒出香味。','下切块的番茄炒到出汁。','加入鹰嘴豆、椰浆和少许水，小火煮 10 分钟。','最后放菠菜煮软，下盐调味，配糙米饭。'],
+ tip:'椰浆用淡的、少量就好，香味够又不会太腻。'},
 
 {id:'d1',m:'d',name:'姜葱清蒸鱼配白灼生菜',t:25,kcal:300,diet:'sea',i:['fish','--f-white','--f-green','--f-red'],
  note:'最原味的蒸鱼，鲜嫩少油',
@@ -329,20 +451,68 @@ var R=[
  note:'放进烤箱就不用顾，Omega-3 满满',
  ing:[['三文鱼扒',1,'片',{n:'每片约 150g'}],['番薯',150,'g'],['四季豆',80,'g',{p:250,pu:'包',n:'一包约 250g'}],['柠檬',0.25,'粒'],['蒜',1,'瓣',{s:1}],['橄榄油',1,'茶匙',{s:1}],['盐、黑胡椒',0,'少许',{s:1}]],
  steps:['烤箱预热 200°C（气炸锅 180°C）。','番薯切块，拌橄榄油和盐，先烤 15 分钟。','三文鱼抹干，撒盐、黑胡椒和蒜末。','把三文鱼和四季豆放进烤盘，和番薯一起再烤 10–12 分钟。','出炉挤上柠檬汁。'],
- tip:'三文鱼皮朝下烤，皮会脆、肉不会干。'}
+ tip:'三文鱼皮朝下烤，皮会脆、肉不会干。'},
+{id:'d6',m:'d',name:'冬瓜虾仁汤配炒豆苗',t:30,kcal:280,diet:'sea',i:['pot','--f-green','--f-pink','--f-white'],
+ note:'清清爽爽的一汤一菜',
+ ing:[['冬瓜',200,'g',{p:1000,pu:'块',n:'市场常切一块约 1kg'}],['虾仁',100,'g',{p:250,pu:'包',n:'冷冻一包约 250g'}],['豆苗',100,'g',{p:200,pu:'包'}],['姜',3,'片',{s:1}],['蒜',2,'瓣',{s:1}],['盐、白胡椒',0,'少许',{s:1}],['油',1,'茶匙',{s:1}]],
+ steps:['冬瓜去皮切薄片。','锅里加水（每人约 400ml）和姜片煮滚，放冬瓜煮 10 分钟到变透明。','加入虾仁煮 2 分钟到变红，下盐和白胡椒调味。','另起锅爆香蒜末，下豆苗大火快炒 1 分钟，加少许盐。'],
+ tip:'冬瓜切薄一点，熟得快、更入味。'},
+{id:'d7',m:'d',name:'烤鸡腿彩色蔬菜盘',t:40,kcal:480,diet:'meat',i:['plate','--f-brown','--f-orange','--f-green'],
+ note:'一个烤盘搞定，洗碗也少',
+ ing:[['鸡腿（带骨）',1,'只'],['南瓜',100,'g',{p:800,pu:'块',n:'市场常切一块约 800g'}],['西兰花',80,'g',{p:300,pu:'棵',n:'一棵约 300g'}],['彩椒',0.5,'粒'],['洋葱',0.5,'粒'],['橄榄油',1,'汤匙',{s:1}],['蒜',2,'瓣',{s:1}],['迷迭香或混合香草',0.5,'茶匙',{s:1}],['盐、黑胡椒',0,'少许',{s:1}]],
+ steps:['烤箱预热 200°C。','鸡腿抹干，用盐、黑胡椒、蒜末和香草抹匀。','南瓜、彩椒、洋葱切块，西兰花切小朵，拌橄榄油和盐。','鸡腿和蔬菜铺在同一个烤盘，烤 30–35 分钟，中途翻一次。','鸡皮金黄、用筷子插进最厚处流出清汁就熟了。'],
+ tip:'西兰花容易焦，可以最后 15 分钟才放进去。'},
+{id:'d8',m:'d',name:'鸡肉碎麻婆豆腐',t:20,kcal:420,diet:'meat',i:['bowl','--f-red','--f-white','--f-green'],
+ note:'用鸡肉代替猪肉，一样下饭',
+ ing:[['嫩豆腐',0.5,'盒'],['鸡肉碎',80,'g',{p:300,pu:'盒',n:'一盒约 300g'}],['糙米',60,'g',{p:1000,pu:'包',n:'1kg 装'}],['葱',0.5,'根'],['豆瓣酱',1,'茶匙',{s:1}],['蒜',2,'瓣',{s:1}],['姜',2,'片',{s:1}],['生抽',1,'茶匙',{s:1}],['玉米淀粉',1,'茶匙',{s:1}],['花椒粉（可省）',0,'少许',{s:1}],['油',1,'茶匙',{s:1}]],
+ steps:['豆腐切小方块，放进加了少许盐的热水里泡 3 分钟。','少油炒香蒜、姜和豆瓣酱，下鸡肉碎炒散。','加半碗水和生抽煮滚，轻轻放入豆腐，小火煮 3 分钟。','玉米淀粉加 2 汤匙水调匀，分两次推入勾芡。','撒葱花和花椒粉，配饭。'],
+ tip:'用推的不要用炒的，豆腐才不会碎。'},
+{id:'d9',m:'d',name:'泰式生菜包鸡肉碎',t:20,kcal:350,diet:'meat',i:['plate','--f-green','--f-brown','--f-red'],
+ note:'酸辣开胃，用生菜代替饭',
+ ing:[['鸡肉碎',150,'g',{p:300,pu:'盒',n:'一盒约 300g'}],['生菜',4,'片',{p:12,pu:'棵',n:'一棵约 12 片'}],['紫洋葱',0.25,'粒'],['红辣椒',0.5,'条'],['九层塔或薄荷',0.25,'把'],['酸柑或柠檬',0.5,'粒'],['鱼露',1,'茶匙',{s:1}],['糖',0.5,'茶匙',{s:1}],['油',0.5,'茶匙',{s:1}]],
+ steps:['生菜一片片剥开洗净，抹干备用。','锅里少油，大火把鸡肉碎炒散炒熟。','关火，加鱼露、糖，挤入酸柑汁拌匀。','放入切丝的洋葱、辣椒和九层塔拌一拌。','用生菜包着吃。'],
+ tip:'吃不够饱的话可以配半碗糙米饭。'},
+{id:'d10',m:'d',name:'菇菇豆腐味噌锅',t:25,kcal:330,diet:'vegan',i:['pot','--f-cream','--f-brown','--f-green'],
+ note:'一锅暖暖的，菇的鲜味很足',
+ ing:[['综合菇类（金针菇、香菇、蟹味菇）',150,'g',{p:200,pu:'包'}],['老豆腐',0.5,'块'],['大白菜',120,'g',{p:800,pu:'棵',n:'一棵约 800g'}],['荞麦面（可省）',60,'g',{p:300,pu:'包'}],['葱',0.5,'根'],['味噌',1,'汤匙',{s:1}],['昆布或香菇粉',0,'少许',{s:1}]],
+ steps:['锅里加水（每人约 400ml），放昆布小火煮 10 分钟；没有昆布就加少许香菇粉。','加入白菜梗、豆腐块和菇类煮 5 分钟。','放白菜叶煮软。','转小火，用汤勺把味噌在汤里化开，之后不要再大滚。','喜欢的话加一份煮好的荞麦面，撒葱花。'],
+ tip:'味噌煮滚会失去香味，最后才放。'}
 ];
 var BY={};R.forEach(function(r){BY[r.id]=r;});
 var MEAL={b:'早餐',l:'午餐',d:'晚餐',all:'全部'};
 var DIET={veg:['蛋奶素',''],vegan:['纯素',''],meat:['不含猪肉',''],sea:['海鲜 · 不含猪肉','sea'],pork:['含猪肉','pork']};
-var COUNT=['粒','根','条','片','把','块','盒','瓣'];
+var COUNT=['粒','根','条','片','把','块','盒','瓣','朵','只'];
+
+// ---------- fridge ingredients ----------
+// [显示名字, 认菜单食材用的规则, 即兴菜每人分量, 单位, 类型 P蛋白质 V蔬菜 C主食 F水果 D奶类]
+var GROUPS=[
+ {k:'meat',name:'肉类',icon:'<path d="M14 26 Q6 18 14 10 Q22 4 30 12 Q36 20 28 26 Q22 30 14 26 Z" fill="var(--f-brown)"/><path d="M26 26 L34 34" stroke-width="4"/><circle cx="35" cy="35" r="3" fill="var(--f-white)"/>',
+  items:[['鸡肉',/鸡胸|鸡腿|鸡肉/,150,'g','P'],['猪肉',/猪/,130,'g','P'],['牛肉',/牛肉|牛柳/,120,'g','P']]},
+ {k:'sea',name:'海鲜',icon:'<path d="M6 18 Q16 8 28 16 L36 10 Q34 18 36 26 L28 20 Q16 28 6 18 Z" fill="var(--f-pink)"/><circle cx="12" cy="17" r="1.5" fill="var(--ink)"/>',
+  items:[['鱼',/^鱼/,200,'g','P'],['三文鱼',/三文鱼/,1,'片','P'],['虾',/虾/,120,'g','P']]},
+ {k:'egg',name:'蛋 · 豆 · 奶',icon:'<path d="M20 4 Q30 14 30 24 Q30 34 20 34 Q10 34 10 24 Q10 14 20 4 Z" fill="var(--f-white)"/><circle cx="20" cy="24" r="5" fill="var(--f-yellow)" stroke="none"/>',
+  items:[['鸡蛋',/鸡蛋/,2,'粒','P'],['豆腐',/豆腐/,0.5,'块','P'],['鹰嘴豆',/鹰嘴豆/,80,'g','P'],['牛奶 / 豆浆',/牛奶|豆浆|椰浆/,250,'ml','D'],['酸奶',/酸奶/,150,'g','D']]},
+ {k:'veg',name:'蔬菜',icon:'<path d="M10 32 L26 14 Q32 12 30 20 L12 34 Z" fill="var(--f-orange)"/><path d="M27 13 Q30 4 36 6 M28 14 Q36 10 38 16" stroke="var(--f-green)" stroke-width="2.4"/>',
+  items:[['冷冻杂菜',/杂菜/,80,'g','V'],['青菜（小白菜等）',/小白菜|青菜/,100,'g','V'],['大白菜',/白菜/,120,'g','V'],['菠菜',/菠菜/,80,'g','V'],['西兰花',/西兰花/,100,'g','V'],['菜心',/菜心/,120,'g','V'],['生菜',/生菜/,80,'g','V'],['豆苗',/豆苗/,100,'g','V'],['豆芽',/豆芽/,80,'g','V'],['红萝卜',/红萝卜/,60,'g','V'],['番茄',/番茄/,1,'粒','V'],['洋葱',/洋葱/,0.5,'粒','V'],['彩椒',/彩椒|甜椒/,0.5,'粒','V'],['黄瓜',/黄瓜/,0.5,'条','V'],['菇类',/菇/,100,'g','V'],['玉米',/玉米(?!淀粉)/,0.5,'根','V'],['四季豆',/四季豆/,80,'g','V'],['冬瓜',/冬瓜/,150,'g','V'],['南瓜',/南瓜/,120,'g','V'],['番薯',/番薯/,150,'g','V'],['牛油果',/牛油果/,0.5,'粒','V']]},
+ {k:'carb',name:'主食',icon:'<path d="M6 20 Q20 18 34 20 Q33 34 20 35 Q7 34 6 20 Z" fill="var(--f-orange)"/><path d="M8 20 Q10 10 20 11 Q30 10 32 20 Z" fill="var(--f-white)"/>',
+  items:[['米饭 / 糙米',/糙米|白米|米饭/,60,'g','C'],['面条',/面$|面（|荞麦面|乌冬|米粉/,80,'g','C'],['燕麦',/燕麦/,40,'g','C'],['面包 / 卷饼',/面包|卷饼/,2,'片','C'],['藜麦',/藜麦/,50,'g','C'],['小米',/^小米/,40,'g','C']]},
+ {k:'fruit',name:'水果',icon:'<path d="M20 12 Q10 6 7 16 Q5 28 14 34 Q20 36 26 34 Q35 28 33 16 Q30 6 20 12 Z" fill="var(--f-red)"/><path d="M20 12 Q20 6 24 3" /><path d="M22 8 Q28 4 30 8 Q26 11 22 8 Z" fill="var(--f-green)"/>',
+  items:[['香蕉',/香蕉/,1,'根','F'],['莓果',/莓/,80,'g','F']]}
+];
+var PANTRY=[],PK={};
+GROUPS.forEach(function(g){g.items.forEach(function(it){var o={name:it[0],re:it[1],q:it[2],u:it[3],type:it[4],group:g.k};PANTRY.push(o);PK[o.name]=o;});});
+function keyOf(name){for(var i=0;i<PANTRY.length;i++){if(PANTRY[i].re.test(name))return PANTRY[i].name;}return null;}
+// key ingredients of a recipe (skip seasonings and anything marked 可省)
+function needKeys(r){var out=[];r.ing.forEach(function(g){if((g[3]&&g[3].s)||/可省/.test(g[0]))return;var k=keyOf(g[0]);if(k&&out.indexOf(k)<0)out.push(k);});return out;}
 
 // ---------- state ----------
 function load(k,d){try{var v=localStorage.getItem('jtzsm_'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function save(k,v){try{localStorage.setItem('jtzsm_'+k,JSON.stringify(v));}catch(e){}}
 var h=new Date().getHours();
-var st={meal:load('meal',h<10?'b':h<15?'l':'d'),n:load('n',2),f:load('f',{}),shop:load('shop',[]),checked:load('checked',{}),pick:null};
+var st={mode:load('mode','menu'),meal:load('meal',h<10?'b':h<15?'l':'d'),n:load('n',2),f:load('f',{}),shop:load('shop',[]),checked:load('checked',{}),fridge:load('fridge',[]),pick:null,iv:0};
 if(!MEAL[st.meal])st.meal='all';
-st.shop=st.shop.filter(function(x){return BY[x.id];});
+if(st.mode!=='fridge')st.mode='menu';
+st.fridge=st.fridge.filter(function(k){return PK[k];});
 
 // ---------- quantity helpers ----------
 function half(x){var v=Math.ceil(x*2-1e-9)/2;if(v<=0)v=0.5;var i=Math.floor(v);if(v===i)return String(i);return i===0?'半':i+'½';}
@@ -363,30 +533,163 @@ function buyQty(g,q){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
+function dietOk(r){
+  if(st.f.veg&&r.diet!=='veg'&&r.diet!=='vegan')return false;
+  if(st.f.nopork&&r.diet==='pork')return false;
+  return true;
+}
 function list(){
   return R.filter(function(r){
     if(st.meal!=='all'&&r.m!==st.meal)return false;
-    if(st.f.veg&&r.diet!=='veg'&&r.diet!=='vegan')return false;
-    if(st.f.nopork&&r.diet==='pork')return false;
+    if(!dietOk(r))return false;
     if(st.f.quick&&r.t>20)return false;
     return true;
   });
 }
-function tags(r){var d=DIET[r.diet];return '<span class="tag">'+MEAL[r.m]+'</span><span class="tag '+d[1]+'">'+d[0]+'</span>';}
+function tags(r){var d=DIET[r.diet];return '<span class="tag">'+(MEAL[r.m]||'即兴')+'</span><span class="tag '+d[1]+'">'+d[0]+'</span>';}
+function card(r,extra){
+  return '<button class="card press" data-open="'+r.id+'"><div class="illo">'+art(r)+'</div><h3>'+esc(r.name)+'</h3>'+
+    '<div class="meta">'+r.t+' 分钟 · 约 '+r.kcal+' kcal/人</div>'+(extra||'')+'<div class="tags">'+tags(r)+'</div></button>';
+}
+
+// ---------- improvised dish from what's in the fridge ----------
+function improvise(sel){
+  var items=sel.map(function(k){return PK[k];});
+  var by=function(t){return items.filter(function(x){return x.type===t;});};
+  var P=by('P'),V=by('V'),C=by('C'),F=by('F'),D=by('D');
+  var has=function(n){return sel.indexOf(n)>=0;};
+  var nm=function(x){return x.name.replace(/（.*）| \/.*$/g,'');};
+  var Pm=P.filter(function(x){return x.name!=='鸡蛋';});
+  var Pf=Pm.filter(function(x){return x.name!=='鱼'&&x.name!=='三文鱼';});
+  var Vraw=V; V=V.filter(function(x){return x.name!=='牛油果';});
+  var leafy=V.filter(function(x){return ['青菜（小白菜等）','大白菜','菠菜','西兰花','菜心','生菜','豆苗','豆芽','四季豆'].indexOf(x.name)>=0;});
+  var egg=has('鸡蛋')?PK['鸡蛋']:null;
+  var rice=has('米饭 / 糙米')?PK['米饭 / 糙米']:null, noodle=has('面条')?PK['面条']:null;
+  var grain=rice||(has('藜麦')?PK['藜麦']:null);
+  var v2=V.slice(0,2), vNames=v2.map(nm).join('');
+  var prep=function(list){
+    var s=[];
+    list.forEach(function(x){
+      if(x.name==='鸡肉'||x.name==='猪肉'||x.name==='牛肉')s.push(nm(x)+'切片，加少许生抽、玉米淀粉和一点水抓匀，腌 10 分钟。');
+      else if(x.name==='鱼'||x.name==='三文鱼')s.push(nm(x)+'洗净抹干，抹少许盐和白胡椒。');
+      else if(x.name==='虾')s.push('虾去壳去肠线，用少许盐和白胡椒腌 5 分钟。');
+      else if(x.name==='豆腐')s.push('豆腐切块，用厨房纸抹干。');
+      else if(x.name==='鹰嘴豆')s.push('鹰嘴豆沥干，冲一下水。');
+    });
+    var vs=list.filter(function(x){return x.type==='V';});
+    if(vs.length)s.push(vs.map(nm).join('、')+'洗净切好：叶菜切段，根茎类切小块或薄片。');
+    return s;
+  };
+  var M=[];
+  if(rice&&(P.length||V.length)){
+    var p=Pm.slice(0,1), use=p.concat(egg?[egg]:[],v2,[rice]);
+    M.push({use:use,name:(p.length?nm(p[0]):'')+(egg?'鸡蛋':'')+vNames+'炒饭',illo:['pan','--f-cream','--f-yellow','--f-green'],t:20,m:'l',
+      steps:['米饭最好用隔夜饭；没有的话先把米煮好，摊开放凉。'].concat(prep(p.concat(v2)),
+        p.length?['热锅少油，先把'+nm(p[0])+'炒熟，盛起来。']:[],
+        egg?['下蛋液炒到半熟，盛起来。']:[],
+        v2.length?['同一个锅下'+v2.map(nm).join('、')+'炒 2 分钟。']:[],
+        ['下饭大火翻炒，加生抽和少许白胡椒，把刚才盛起来的料放回去炒匀。']),
+      sea:[['油',1,'茶匙'],['生抽',1,'茶匙'],['白胡椒',0,'少许']]});
+  }
+  if(noodle&&(P.length||V.length)){
+    var p2=P.slice(0,1), use2=p2.concat(v2,[noodle]);
+    M.push({use:use2,name:(p2.length?nm(p2[0]):'')+vNames+'汤面',illo:['noodle','--f-cream','--f-yellow','--f-green'],t:20,m:'l',
+      steps:prep(p2).concat(v2.length?[v2.map(nm).join('、')+'洗净切好。']:[],
+        ['锅里加水（每人约 400ml）和两片姜煮滚。'],
+        p2.length?[(p2[0].name==='鸡蛋'?'转小火打入鸡蛋，煮到蛋白凝固。':'放入'+nm(p2[0])+'，煮到全熟。')]:[],
+        v2.length?['加入'+v2.map(nm).join('、')+'煮 2–3 分钟。']:[],
+        ['另一锅水按包装时间把面煮熟，捞进碗里。','汤用盐、少许生抽和白胡椒调味，连料一起倒进面碗，滴几滴麻油。']),
+      sea:[['姜',2,'片'],['生抽',1,'茶匙'],['盐、白胡椒',0,'少许'],['麻油',0.5,'茶匙']]});
+  }
+  if(Pf.length&&V.length){
+    var p3=Pf[0], v3=V.slice(0,2), use3=[p3].concat(v3,rice?[rice]:[]);
+    M.push({use:use3,name:v3.map(nm).join('')+'炒'+nm(p3)+(rice?'配饭':''),illo:['plate','--f-brown','--f-green','--f-orange'],t:20,m:'d',
+      steps:(rice?['米先洗好用电饭锅煮。']:[]).concat(prep([p3].concat(v3)),
+        ['热锅下油爆香蒜末，下'+nm(p3)+'大火炒到变色，盛起来。'],
+        ['同一个锅下'+v3.map(nm).join('、')+'炒 2–3 分钟，太干就加 1–2 汤匙水。'],
+        ['放回'+nm(p3)+'，加生抽和蚝油炒匀就好。']),
+      sea:[['蒜',2,'瓣'],['油',1,'茶匙'],['生抽',1,'茶匙'],['蚝油',1,'茶匙'],['玉米淀粉',0.5,'茶匙']]});
+  }
+  var steamP=P.filter(function(x){return ['鱼','三文鱼','虾','鸡肉','豆腐','鸡蛋'].indexOf(x.name)>=0;})[0];
+  if(steamP){
+    var sideV=leafy.slice(0,1), use4=[steamP].concat(sideV,rice?[rice]:[]);
+    var sn={'鱼':'姜葱蒸鱼','三文鱼':'姜葱蒸三文鱼','虾':'蒜蓉蒸虾','鸡肉':'姜葱蒸鸡','豆腐':'酱油蒸豆腐','鸡蛋':'滑嫩蒸水蛋'}[steamP.name];
+    var how={'鱼':'水大滚后放进去，大火蒸 8–10 分钟，筷子能插进最厚处就熟。','三文鱼':'水滚后大火蒸 6–8 分钟。','虾':'铺上蒜末，水滚后大火蒸 4–5 分钟到变红。','鸡肉':'铺上姜丝，水滚后大火蒸 12–15 分钟。','豆腐':'铺上姜丝和少许生抽，水滚后蒸 8 分钟。','鸡蛋':'蛋液加 1.5 倍温水和少许盐打匀过筛，盖碟子，中小火蒸 10 分钟。'}[steamP.name];
+    M.push({use:use4,name:sn+(sideV.length?'配白灼'+nm(sideV[0]):''),illo:[steamP.name==='鱼'||steamP.name==='三文鱼'?'fish':'plate',steamP.name==='三文鱼'?'--f-pink':'--f-white','--f-green','--f-red'],t:25,m:'d',
+      steps:(rice?['米先洗好用电饭锅煮。']:[]).concat(steamP.name==='鸡蛋'?[]:prep([steamP]),[how],
+        steamP.name==='鸡蛋'?['出锅淋少许生抽和麻油。']:['蒸好后倒掉碟里的水，铺葱丝，淋一汤匙烧热的油，再淋生抽。'],
+        sideV.length?[nm(sideV[0])+'放进滚水烫 30 秒到 1 分钟，捞起淋少许蚝油。']:[]),
+      sea:[['姜',3,'片'],['葱',0.5,'根'],['生抽',1,'汤匙'],['油',1,'茶匙'],['麻油',0.5,'茶匙']]});
+  }
+  if(P.length||V.length>=2){
+    var p5=P.slice(0,1), v5=V.slice(0,3), use5=p5.concat(v5);
+    M.push({use:use5,name:v5.map(nm).join('')+(p5.length?nm(p5[0]):'')+'汤',illo:['pot','--f-cream','--f-green','--f-orange'],t:30,m:'d',
+      steps:prep(p5.concat(v5)).concat(['锅里加水（每人约 400ml）和姜片煮滚。'],
+        v5.length?['先放比较难熟的'+v5.map(nm).join('、')+'，小火煮 10 分钟。']:[],
+        p5.length?[p5[0].name==='鸡蛋'?'转小火，把打散的蛋液慢慢倒进去，轻轻搅出蛋花。':'放入'+nm(p5[0])+'，煮到全熟。']:[],
+        ['下盐和白胡椒调味。']),
+      sea:[['姜',2,'片'],['盐、白胡椒',0,'少许']]});
+  }
+  if(egg&&V.length){
+    var v6=V.slice(0,2);
+    M.push({use:[egg].concat(v6),name:v6.map(nm).join('')+'烘蛋',illo:['pan','--f-yellow','--f-green','--f-red'],t:15,m:'b',
+      steps:[v6.map(nm).join('、')+'洗净切小块。','平底锅下油，把'+v6.map(nm).join('、')+'炒软，撒少许盐。','倒入打散的蛋液，转小火盖锅盖焖 4–5 分钟至凝固。','切块上桌。'],
+      sea:[['油',1,'茶匙'],['盐、黑胡椒',0,'少许']]});
+  }
+  if(grain&&(P.length||V.length)&&!rice){
+    var p7=P.slice(0,1), v7=V.slice(0,2);
+    M.push({use:p7.concat(v7,[grain]),name:(p7.length?nm(p7[0]):'')+vNames+nm(grain)+'沙拉碗',illo:['bowl','--f-yellow','--f-green','--f-red'],t:25,m:'l',
+      steps:[nm(grain)+'洗净，加 2 倍水煮滚后转小火煮 12 分钟，焖 5 分钟。'].concat(prep(p7.concat(v7)),
+        p7.length?['平底锅少油把'+nm(p7[0])+'煎熟或炒熟。']:[],
+        ['蔬菜可以生吃的直接切，要熟的滚水烫 1–2 分钟。','橄榄油、柠檬汁、盐和黑胡椒拌成酱汁，全部材料拌匀。']),
+      sea:[['橄榄油',1,'汤匙'],['柠檬汁',1,'汤匙'],['盐、黑胡椒',0,'少许']]});
+  }
+  if(has('燕麦')){
+    var add8=F.concat(D).slice(0,2);
+    M.push({use:[PK['燕麦']].concat(add8),name:(add8.length?add8.map(nm).join(''):'')+'燕麦碗',illo:['bowl','--f-cream','--f-yellow','--f-red'],t:10,m:'b',
+      steps:['燕麦加'+(D.length?nm(D[0]):'热水')+'（每人约 200ml），小火煮 3 分钟或微波 2 分钟。'].concat(F.length?[F.map(nm).join('、')+'切好铺在上面。']:[],['想甜一点淋少许蜂蜜。']),
+      sea:[['蜂蜜',1,'茶匙']]});
+  }
+  if(F.length&&(D.length||Vraw.length)){
+    var use9=F.slice(0,2).concat(D.slice(0,1),Vraw.filter(function(x){return x.name==='菠菜'||x.name==='牛油果';}).slice(0,1));
+    M.push({use:use9,name:use9.filter(function(x){return x.type!=='D';}).map(nm).join('')+'奶昔',illo:['cup','--f-green','--f-yellow','--f-white'],t:5,m:'b',
+      steps:['把'+use9.map(nm).join('、')+'放进搅拌机'+(D.length?'':'，加一杯清水或冰块')+'，打 40 秒。','倒进杯子马上喝。'],sea:[]});
+  }
+  if(has('面包 / 卷饼')&&(egg||has('牛油果'))){
+    var use10=[PK['面包 / 卷饼']].concat(egg?[egg]:[],has('牛油果')?[PK['牛油果']]:[],has('番茄')?[PK['番茄']]:[]);
+    M.push({use:use10,name:use10.slice(1).map(nm).join('')+'吐司',illo:['toast','--f-green','--f-yellow','--f-red'],t:10,m:'b',
+      steps:['面包烤到表面微脆。'].concat(egg?['鸡蛋煎成荷包蛋，或水滚后煮 7 分钟切片。']:[],has('牛油果')?['牛油果压成泥，加盐和黑胡椒。']:[],['全部叠在吐司上。']),
+      sea:[['盐、黑胡椒',0,'少许']]});
+  }
+  M.sort(function(a,b){return b.use.length-a.use.length;});
+  return M;
+}
+var KCAL={P:180,V:30,C:220,F:90,D:110};
+function toRecipe(m){
+  var LBL={'米饭 / 糙米':'糙米或白米（生米）','面包 / 卷饼':'全麦面包','牛奶 / 豆浆':'牛奶或豆浆','面条':'面条（干）'};
+  var ing=m.use.map(function(x){return [LBL[x.name]||x.name,x.q,x.u];}).concat(m.sea.map(function(s){return [s[0],s[1],s[2],{s:1}];}));
+  var kcal=m.use.reduce(function(a,x){return a+(KCAL[x.type]||0);},m.sea.length?40:0);
+  var names=m.use.map(function(x){return x.name;}), diet='vegan';
+  if(names.indexOf('猪肉')>=0)diet='pork';else if(/鱼|虾/.test(names.join()))diet='sea';else if(/鸡肉|牛肉/.test(names.join()))diet='meat';else if(/鸡蛋|牛奶|酸奶/.test(names.join()))diet='veg';
+  return {id:'x',m:m.m,name:m.name,t:m.t,kcal:Math.round(kcal/10)*10,diet:diet,i:m.illo,note:'用你选的 '+m.use.length+' 样食材即兴搭配',ing:ing,steps:m.steps,
+    tip:'这是按你手上的食材搭出来的家常做法，调味可以按口味加减。'};
+}
 
 // ---------- render ----------
 var $=function(id){return document.getElementById(id);};
 function render(){
+  document.querySelectorAll('[data-mode]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.mode===st.mode);});
   document.querySelectorAll('#meals button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.m===st.meal);});
   document.querySelectorAll('[data-f]').forEach(function(b){b.setAttribute('aria-pressed',!!st.f[b.dataset.f]);});
   $('people').textContent=st.n+' 人';
-  var L=list();
-  $('listTitle').textContent=(st.meal==='all'?'全部菜单':MEAL[st.meal]+'菜单')+' · '+L.length+' 道';
-  $('grid').innerHTML=L.length?L.map(function(r){
-    return '<button class="card press" data-open="'+r.id+'"><div class="illo">'+art(r)+'</div><h3>'+esc(r.name)+'</h3>'+
-      '<div class="meta">'+r.t+' 分钟 · 约 '+r.kcal+' kcal/人</div><div class="tags">'+tags(r)+'</div></button>';
-  }).join(''):'<div class="empty">筛到没有菜了，放宽一点条件试试看。</div>';
-  renderPick(false);renderShop();
+  $('menuView').hidden=st.mode!=='menu';$('fridgeView').hidden=st.mode!=='fridge';$('mealRow').hidden=st.mode!=='menu';
+  if(st.mode==='menu'){
+    var L=list();
+    $('listTitle').textContent=(st.meal==='all'?'全部菜单':MEAL[st.meal]+'菜单')+' · '+L.length+' 道';
+    $('grid').innerHTML=L.length?L.map(function(r){return card(r);}).join(''):'<div class="empty">筛到没有菜了，放宽一点条件试试看。</div>';
+    renderPick(false);
+  }else renderFridge(false);
+  renderShop();
 }
 function choose(){
   var L=list();if(!L.length){st.pick=null;return;}
@@ -396,7 +699,6 @@ function choose(){
 function renderPick(anim){
   var L=list();
   if(!st.pick||!L.some(function(r){return r.id===st.pick;})){
-    // first view: stable pick of the day
     if(L.length){var d=new Date();st.pick=L[(d.getDate()+d.getMonth()*31)%L.length].id;}else st.pick=null;
   }
   var el=$('pick');
@@ -407,27 +709,63 @@ function renderPick(anim){
     '<button class="btn primary press" data-open="'+r.id+'">看食材和做法</button><button class="btn ghost press" id="reroll">换一道</button></div></div>';
   if(anim){el.classList.remove('flip');void el.offsetWidth;el.classList.add('flip');}
 }
+function renderFridge(anim){
+  $('fgroups').innerHTML=GROUPS.map(function(g){
+    return '<div class="fgroup"><svg viewBox="0 0 40 38" aria-hidden="true" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+g.icon+'</svg>'+
+      '<div><h3>'+g.name+'</h3><div class="fchips">'+g.items.map(function(it){var on=st.fridge.indexOf(it[0])>=0;
+        return '<button class="chip press" data-fr="'+esc(it[0])+'" aria-pressed="'+on+'">'+esc(it[0])+'</button>';}).join('')+'</div></div></div>';
+  }).join('');
+  var n=st.fridge.length;
+  $('fcount').textContent=n?'已选 '+n+' 样：'+st.fridge.join('、'):'还没选食材，点上面你手上有的';
+  $('fclear').hidden=!n;
+  // improvised dish
+  var el=$('improv'),M=n?improvise(st.fridge).filter(function(m){return dietOk(toRecipe(m));}):[];
+  if(!M.length){
+    BY.x=null;
+    el.innerHTML='<div class="illo">'+ILLO.pot('--f-cream','--f-green','--f-orange')+'</div><div><div class="eyebrow">即兴料理</div><h2>'+(n?'再多选一两样':'选几样食材试试')+'</h2><p>'+(n?'现在的组合还凑不成一道菜，加一样蛋白质（蛋、豆腐、肉）或蔬菜看看。':'例如选「鸡蛋」「番茄」「米饭」，就能搭出一道炒饭或汤。')+'</p></div>';
+  }else{
+    var m=M[st.iv%M.length],r=toRecipe(m);BY.x=r;
+    el.innerHTML='<div class="illo">'+art(r)+'</div><div><div class="eyebrow">用你现有的食材即兴煮</div><h2>'+esc(r.name)+'</h2>'+
+      '<p>用到 '+m.use.map(function(x){return x.name;}).join('、')+' · '+r.t+' 分钟 · '+st.n+' 人份</p><div class="btns">'+
+      '<button class="btn primary press" data-open="x">看分量和做法</button>'+(M.length>1?'<button class="btn ghost press" id="nextIdea">换个做法（'+(st.iv%M.length+1)+'/'+M.length+'）</button>':'')+'</div></div>';
+    if(anim){el.classList.remove('flip');void el.offsetWidth;el.classList.add('flip');}
+  }
+  // recipes ranked by what's missing
+  if(!n){$('matchTitle').textContent='可以煮的菜';$('matches').innerHTML='<div class="empty">选了食材之后，这里会列出用得上的菜单，还会告诉你缺什么。</div>';return;}
+  var rows=R.filter(dietOk).map(function(r){var need=needKeys(r),miss=need.filter(function(k){return st.fridge.indexOf(k)<0;});return {r:r,have:need.length-miss.length,miss:miss,need:need.length};})
+    .filter(function(x){return x.have>0;})
+    .sort(function(a,b){return a.miss.length-b.miss.length||b.have-a.have;});
+  var shown=rows.filter(function(x){return x.miss.length<=2;});
+  if(!shown.length)shown=rows.slice(0,6);
+  $('matchTitle').textContent='可以煮的菜 · '+shown.length+' 道';
+  $('matches').innerHTML=shown.length?shown.map(function(x){
+    return card(x.r,x.miss.length?'<div class="need">有 '+x.have+'/'+x.need+' 样 · 还缺 '+esc(x.miss.join('、'))+'</div>':'<div class="need ok">食材都齐了，可以直接煮</div>');
+  }).join(''):'<div class="empty">菜单里还没有用到这些食材的菜，先看看上面的即兴料理吧。</div>';
+}
 
 // ---------- detail sheet ----------
 var openId=null,sheetN=2;
 function sheetHTML(r){
   var main=r.ing.filter(function(g){return !(g[3]&&g[3].s);}),sea=r.ing.filter(function(g){return g[3]&&g[3].s;});
-  var inShop=st.shop.some(function(x){return x.id===r.id;});
+  var inShop=r.id!=='x'&&st.shop.some(function(x){return x.id===r.id;});
+  var showHave=st.mode==='fridge'&&st.fridge.length;
   return '<div class="sheet-top"><div class="illo">'+art(r)+'</div><div><h2 id="sheetTitle">'+esc(r.name)+'</h2><div class="tags" style="padding:4px 0 0">'+tags(r)+
     '<span class="tag">'+r.t+' 分钟</span><span class="tag">约 '+r.kcal+' kcal/人</span></div></div><button class="close press" data-close aria-label="关闭">×</button></div>'+
     '<section><h3>几个人吃？</h3><div class="stepper"><button class="press" data-sn="-1" aria-label="少一个人">−</button><output aria-live="polite">'+sheetN+' 人</output><button class="press" data-sn="1" aria-label="多一个人">+</button></div></section>'+
     '<section><h3>食材 <small>左边是煮的分量，右边是去巴刹 / 超市要买多少</small></h3><div class="tbl"><table><thead><tr><th>食材</th><th>要用</th><th>要买</th></tr></thead><tbody>'+
-    main.map(function(g){var b=buyQty(g,g[1]*sheetN);return '<tr><td>'+esc(g[0])+'</td><td class="q">'+useQty(g,sheetN)+'</td><td class="b">'+b.a+(b.note?'<small>'+esc(b.note)+'</small>':'')+'</td></tr>';}).join('')+
+    main.map(function(g){var k=keyOf(g[0]),got=showHave&&k&&st.fridge.indexOf(k)>=0,b=buyQty(g,g[1]*sheetN);
+      return '<tr><td>'+esc(g[0])+'</td><td class="q">'+useQty(g,sheetN)+'</td>'+(got?'<td class="have">家里有</td>':'<td class="b">'+b.a+(b.note?'<small>'+esc(b.note)+'</small>':'')+'</td>')+'</tr>';}).join('')+
     '</tbody></table></div></section>'+
     (sea.length?'<section><h3>调味料 <small>通常家里有，没有再买</small></h3><div class="tbl"><table><tbody>'+
     sea.map(function(g){return '<tr><td>'+esc(g[0])+'</td><td class="q">'+useQty(g,sheetN)+'</td></tr>';}).join('')+'</tbody></table></div></section>':'')+
     '<section><h3>怎么煮</h3><ol class="steps">'+r.steps.map(function(s){return '<li><span>'+esc(s)+'</span></li>';}).join('')+'</ol></section>'+
     '<section><div class="tip"><b>小贴士：</b>'+esc(r.tip)+'</div></section>'+
-    '<div class="actions"><button class="btn primary press" data-addshop="'+r.id+'">'+(inShop?'更新购物清单（'+sheetN+' 人）':'加入购物清单（'+sheetN+' 人）')+'</button>'+
-    (inShop?'<button class="btn ghost press" data-rmshop="'+r.id+'">从清单拿掉</button>':'')+'</div>';
+    (r.id==='x'?'':'<div class="actions"><button class="btn primary press" data-addshop="'+r.id+'">'+(inShop?'更新购物清单（'+sheetN+' 人）':'加入购物清单（'+sheetN+' 人）')+'</button>'+
+    (inShop?'<button class="btn ghost press" data-rmshop="'+r.id+'">从清单拿掉</button>':'')+'</div>');
 }
 var ov=null,lastFocus=null;
 function openSheet(id){
+  if(!BY[id])return;
   openId=id;var ex=st.shop.filter(function(x){return x.id===id;})[0];sheetN=ex?ex.n:st.n;
   lastFocus=document.activeElement;
   ov=document.createElement('div');ov.className='overlay';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-labelledby','sheetTitle');
@@ -450,6 +788,7 @@ function aggregate(){
           sea:sorder.map(function(k){return {k:k,name:sea[k].g[0]};})};
 }
 function renderShop(){
+  st.shop=st.shop.filter(function(x){return BY[x.id]&&x.id!=='x';});
   var body=$('shopBody');
   if(!st.shop.length){$('shopHint').textContent='';body.innerHTML='<div class="empty" style="padding:18px">还没加菜。打开任何一道菜，按「加入购物清单」，这里会自动帮你把食材加起来。</div>';return;}
   var A=aggregate(),left=A.main.filter(function(i){return !st.checked[i.k];}).length;
@@ -468,8 +807,12 @@ document.addEventListener('click',function(e){
   var t=e.target.closest('button, [data-chk]');
   if(ov&&e.target===ov){closeSheet();return;}
   if(!t)return;
+  if(t.dataset.mode){st.mode=t.dataset.mode;save('mode',st.mode);render();return;}
   if(t.dataset.m){st.meal=t.dataset.m;save('meal',st.meal);st.pick=null;render();return;}
   if(t.dataset.f){st.f[t.dataset.f]=!st.f[t.dataset.f];save('f',st.f);render();return;}
+  if(t.dataset.fr){var k=t.dataset.fr,i=st.fridge.indexOf(k);if(i>=0)st.fridge.splice(i,1);else st.fridge.push(k);st.iv=0;save('fridge',st.fridge);renderFridge(false);return;}
+  if(t.id==='fclear'){st.fridge=[];st.iv=0;save('fridge',st.fridge);renderFridge(false);return;}
+  if(t.id==='nextIdea'){st.iv++;renderFridge(true);return;}
   if(t.id==='minus'||t.id==='plus'){st.n=Math.max(1,Math.min(12,st.n+(t.id==='plus'?1:-1)));save('n',st.n);render();return;}
   if(t.id==='reroll'){choose();renderPick(true);return;}
   if(t.dataset.open){openSheet(t.dataset.open);return;}
